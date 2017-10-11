@@ -81,6 +81,14 @@ describe('<Truncate />', () => {
             global.window = global.document.defaultView;
             global.window.requestAnimationFrame = requestAnimationFrame;
             global.window.cancelAnimationFrame = cancelAnimationFrame;
+
+            // Simple assumption: Let .offsetHeight have a value != 0
+            Object.defineProperty(global.window.HTMLElement.prototype, 'offsetHeight', {
+                get() {
+                    return 1;
+                }
+            });
+
             Object.defineProperty(global.window.HTMLElement.prototype, 'innerText', {
                 configurable: true,
                 get() {
@@ -473,6 +481,56 @@ describe('<Truncate />', () => {
                     expect(Truncate.prototype.innerText(node), 'to be', 'foo\nbar baz');
                 });
             });
+        });
+    });
+
+    describe('calcTargetWidth', () => {
+        it('should return when parent node is not visible', () => {
+            const setState = sinon.spy();
+
+            const instance = {
+                isVisible: () => {},
+                setState,
+                elements: {
+                    target: {
+                        parentNode: {}
+                    }
+                }
+            };
+
+            Truncate.prototype.calcTargetWidth.call(instance);
+
+            expect(setState, 'was not called');
+        });
+    });
+
+    describe('isVisible', () => {
+        it('should return true when element is visible', () => {
+            const { isVisible } = Truncate.prototype;
+
+            expect(
+                isVisible({
+                    offsetWidth: 1,
+                    offsetHeight: 1,
+                    getClientRects: () => ({ lenght: 1 })
+                }),
+                'to be',
+                true
+            );
+        });
+
+        it('should return false when element is invisible', () => {
+            const { isVisible } = Truncate.prototype;
+
+            expect(
+                isVisible({
+                    offsetWidth: 0,
+                    offsetHeight: 0,
+                    getClientRects: () => ({ length: 0 })
+                }),
+                'to be',
+                false
+            );
         });
     });
 

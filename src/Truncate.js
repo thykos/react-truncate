@@ -102,6 +102,15 @@ export default class Truncate extends Component {
         return text;
     }
 
+    isVisible(node) {
+        // https://github.com/jquery/jquery/blob/master/src/css/hiddenVisibleSelectors.js#L12
+        return !!(
+            node.offsetWidth ||
+            node.offsetHeight ||
+            node.getClientRects().length
+        );
+    }
+
     onResize() {
         this.calcTargetWidth();
     }
@@ -121,20 +130,25 @@ export default class Truncate extends Component {
     calcTargetWidth(callback) {
         const {
             elements: {
-                target
+                target,
+                target: {
+                    parentNode
+                }
             },
             calcTargetWidth,
             canvasContext
         } = this;
 
+        const parentVisible = this.isVisible(parentNode);
+
         // Calculation is no longer relevant, since node has been removed
-        if (!target) {
+        if (!target || !parentVisible) {
             return;
         }
 
         // Floor the result to deal with browser subpixel precision
         const targetWidth = Math.floor(
-            target.parentNode.getBoundingClientRect().width
+            parentNode.getBoundingClientRect().width
         );
 
         // Delay calculation until parent node is inserted to the document
